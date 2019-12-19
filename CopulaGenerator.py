@@ -19,14 +19,15 @@ class CopulaGenerator:
         if lambdas is None:  # if no vars is passed, randomly generate dependence
             lambdas = np.random.uniform(1e-5, 10, size=cov.shape[1])
         mean = np.zeros(cov.shape[1])
-        val = np.random.multivariate_normal(mean, cov, 5000).T
-        arr_poisson = np.zeros((val.shape[0], 5000))
+        val = np.random.multivariate_normal(mean, cov, 2000).T
+        arr_poisson = np.zeros((val.shape[0], 2000))
         distribution = norm()
         iter = 0
         for matrix in val:
             stats_cdf = distribution.cdf(matrix)
-            poiss = np.array(poisson.ppf(stats_cdf, lambdas[iter]))
-            arr_poisson[iter] = poiss
+            #poiss = np.array(poisson.ppf(stats_cdf, lambdas[iter]))
+            #arr_poisson[iter] = poiss
+            arr_poisson[iter] = stats_cdf
             iter += 1
 
         return arr_poisson
@@ -82,7 +83,7 @@ class CopulaGenerator:
         arr = []
         if lambdas is None:  # if no vars is passed, randomly generate dependence
             lambdas = np.random.uniform(0.5, 6, size=len(copulas))
-            firstArr = self.removeNans(copulas[0])
+        firstArr = self.removeNans(copulas[0])
         arr_poisson = np.array(poisson.ppf(firstArr, lambdas[0]))
         for i in range(len(copulas)):
             poiss = np.array(poisson.ppf(self.removeNans(copulas[i]), lambdas[i]))
