@@ -12,6 +12,23 @@ class CopulaGenerator:
     def __init__(self):
         self.seed = 1234
 
+    def cdf(self, family, x):
+        if family.lower() == "clayton":
+            print("clayton")
+        elif family.lower() == "gaussian":
+            print("gaussian")
+        elif family.lower() == "gumbel":
+            print("gumbel")
+        else:
+            raise Exception("No valid family was selected. Please select one of Clayton, Gumbel or Gaussian.")
+        print(x)
+
+    def pmf(self, x):
+        print(x)
+
+    def rvs(self, x):
+        print(x)
+
     def removeNans(self, arr):
         return arr[~np.isnan(arr)]
 
@@ -25,8 +42,8 @@ class CopulaGenerator:
         iter = 0
         for matrix in val:
             stats_cdf = distribution.cdf(matrix)
-            #poiss = np.array(poisson.ppf(stats_cdf, lambdas[iter]))
-            #arr_poisson[iter] = poiss
+            # poiss = np.array(poisson.ppf(stats_cdf, lambdas[iter]))
+            # arr_poisson[iter] = poiss
             arr_poisson[iter] = stats_cdf
             iter += 1
 
@@ -35,20 +52,21 @@ class CopulaGenerator:
     def clayton_generator(self, t):
         return (1 + t) ** (-1 / self.alpha)
 
-    def  MultiDimensionalClayton(self, alpha, d=(2,1000)):
-      self.alpha = alpha 
-      arr = []
-      v = gamma.rvs(a=1 / alpha, scale=1, size=(d[1],))
-      for i in range(d[0]):
-        x = np.random.uniform(size=(d[1],))
-        u_x = self.clayton_generator(-np.log10(x) / v)
-        arr.append(u_x)
-      
-      return np.asarray(arr)  
-    def Clayton(self, x, alpha, d=(1000,)):
-        s = np.random.RandomState(1234) 
+    def MultiDimensionalClayton(self, alpha, d=(2, 1000)):
         self.alpha = alpha
-        #x = np.random.uniform(size=d)
+        arr = []
+        v = gamma.rvs(a=1 / alpha, scale=1, size=(d[1],))
+        for i in range(d[0]):
+            x = np.random.uniform(size=(d[1],))
+            u_x = self.clayton_generator(-np.log10(x) / v)
+            arr.append(u_x)
+
+        return np.asarray(arr)
+
+    def Clayton(self, x, alpha, d=(1000,)):
+        s = np.random.RandomState(1234)
+        self.alpha = alpha
+        # x = np.random.uniform(size=d)
         y = s.uniform(size=d)
         v = gamma.rvs(a=1 / alpha, scale=1, size=d, random_state=s)
         u_x = self.clayton_generator(-np.log10(x) / v)
@@ -58,17 +76,18 @@ class CopulaGenerator:
     def gumbel_generator(self, t):
         return np.exp(-t ** (1 / self.alpha))
 
-    def MultiDimensionalGumbel(self, alpha, d=(2,1000)):
-        self.alpha = alpha 
+    def MultiDimensionalGumbel(self, alpha, d=(2, 1000)):
+        self.alpha = alpha
         arr = []
         beta = (math.cos(math.pi / (2 * alpha))) ** alpha
         v = levy_stable.rvs(1 / alpha, 1, loc=0, scale=beta, size=(d[1],))
         for i in range(d[0]):
-          x = np.random.uniform(size=(d[1],))
-          u_x = self.gumbel_generator(-np.log10(x) / v)
-          arr.append(u_x)
+            x = np.random.uniform(size=(d[1],))
+            u_x = self.gumbel_generator(-np.log10(x) / v)
+            arr.append(u_x)
 
         return np.asarray(arr)
+
     def Gumbel(self, alpha, d=(1000,)):
         self.alpha = alpha
         x = np.random.uniform(size=d)
