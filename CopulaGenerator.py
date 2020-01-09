@@ -12,13 +12,16 @@ class CopulaGenerator:
     def __init__(self):
         self.seed = 1234
 
-    def cdf(self, family, x):
+    def cdf(self, family, alpha, u_i_s):
         if family.lower() == "clayton":
-            print("clayton")
+            dim = len(u_i_s)
+            u = 1-dim + sum([u**-alpha for u in u_i_s])
+            return max(0, u)**(-1/alpha)
         elif family.lower() == "gaussian":
             print("gaussian")
         elif family.lower() == "gumbel":
-            print("gumbel")
+            u = np.array(sum([(-np.log(u_i))**alpha for u_i in u_i_s]))
+            return np.exp(-u**(1/alpha))
         else:
             raise Exception("No valid family was selected. Please select one of Clayton, Gumbel or Gaussian.")
         print(x)
