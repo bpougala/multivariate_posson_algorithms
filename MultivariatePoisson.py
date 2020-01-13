@@ -52,7 +52,7 @@ class MultivariatePoisson:
         for cdf in args:
             print("hey")
 
-    def pmf(self, x):
+    def pmf(self, x, mu):
         dim = len(x)
         m = list(itertools.combinations_with_replacement([0, 1], dim))
         sum_m = np.array([sum(i) for i in m])
@@ -63,7 +63,7 @@ class MultivariatePoisson:
             sum_fx = np.zeros(dim)
             for correct_m in correct_ms:
                 sum_fx = np.add(sum_fx,
-                                poisson.cdf(np.subtract(x, correct_m), 2.2))  # sum elements from the element-wise
+                                poisson.cdf(np.subtract(x, correct_m), mu[0]))  # sum elements from the element-wise
             # substraction between the original x input array and the values mi such that m sums up to k
             sum_k = np.add(sum_k, ((-1) ** k * sum_fx))
         return sum_k

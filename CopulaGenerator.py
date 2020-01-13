@@ -4,8 +4,7 @@ import math
 
 
 class CopulaGenerator:
-    theta = None
-    copula = None
+    family = None
     seed = None
     alpha = None
 
@@ -36,6 +35,7 @@ class CopulaGenerator:
         return arr[~np.isnan(arr)]
 
     def Gaussian(self, cov, lambdas=None):
+        self.family = "Gaussian"
         if lambdas is None:  # if no vars is passed, randomly generate dependence
             lambdas = np.random.uniform(1e-5, 10, size=cov.shape[1])
         mean = np.zeros(cov.shape[1])
@@ -111,3 +111,15 @@ class CopulaGenerator:
             poiss = np.array(poisson.ppf(self.removeNans(copulas[i]), lambdas[i]))
             arr.append(poiss)
         return np.asarray(arr)
+
+
+    def fit(self, *args):
+        if self.family.lower() == "Gaussian":
+            arg = args[0]
+        elif self.family.lower() == "Clayton":
+            dim = len(args)
+            func = lambda x : x**(-self.alpha)
+            arr = np.array(func(args))
+            return arr.sum(axis=0) ** (-1 / self.alpha)
+        elif self.family.lower() == "Gumbel":
+            arg = args[0]
