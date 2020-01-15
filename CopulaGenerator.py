@@ -8,19 +8,21 @@ class CopulaGenerator:
     seed = None
     alpha = None
 
-    def __init__(self):
+    def __init__(self, alpha=None, family=None):
         self.seed = 1234
+        self.alpha = alpha
+        self.family = family
 
     def cdf(self, family, alpha, u_i_s):
         if family.lower() == "clayton":
             dim = len(u_i_s)
-            u = 1-dim + sum([u**-alpha for u in u_i_s])
-            return max(0, u)**(-1/alpha)
+            u = 1 - dim + sum([u ** -alpha for u in u_i_s])
+            return max(0, u) ** (-1 / alpha)
         elif family.lower() == "gaussian":
             print("gaussian")
         elif family.lower() == "gumbel":
-            u = np.array(sum([(-np.log(u_i))**alpha for u_i in u_i_s]))
-            return np.exp(-u**(1/alpha))
+            u = np.array(sum([(-np.log(u_i)) ** alpha for u_i in u_i_s]))
+            return np.exp(-u ** (1 / alpha))
         else:
             raise Exception("No valid family was selected. Please select one of Clayton, Gumbel or Gaussian.")
         print(x)
@@ -45,8 +47,6 @@ class CopulaGenerator:
         iter = 0
         for matrix in val:
             stats_cdf = distribution.cdf(matrix)
-            # poiss = np.array(poisson.ppf(stats_cdf, lambdas[iter]))
-            # arr_poisson[iter] = poiss
             arr_poisson[iter] = stats_cdf
             iter += 1
 
@@ -112,14 +112,20 @@ class CopulaGenerator:
             arr.append(poiss)
         return np.asarray(arr)
 
-
-    def fit(self, *args):
-        if self.family.lower() == "Gaussian":
-            arg = args[0]
-        elif self.family.lower() == "Clayton":
-            dim = len(args)
-            func = lambda x : x**(-self.alpha)
-            arr = np.array(func(args))
-            return arr.sum(axis=0) ** (-1 / self.alpha)
-        elif self.family.lower() == "Gumbel":
-            arg = args[0]
+    def joint_cdf(self, data, mu):
+        if self.family.lower() == "gaussian":
+            arg = data[0]
+        elif self.family.lower() == "clayton":
+            dim = data.shape[1]
+            num_dim = data.shape[0]
+            arr = np.zeros(dim)
+            for j in range(data.shape[0]):
+                cdf = poisson.cdf(data[j], mu[j])
+                raised_to_power = [x ** -self.alpha for x in cdf]
+                arr = np.add(arr, raised_to_power)
+            arr = 1 - num_dim + arr
+            pow = np.power(arr, (-1/self.alpha))
+            neg_alpha = -1/self.alpha
+            return np.array([y ** neg_alpha for y in arr])
+        elif self.family.lower() == "gumbel":
+            arg = data[0]

@@ -8,10 +8,13 @@ import itertools
 class MultivariatePoisson:
     cop = None
     seed = None
+    alpha = None
+    family = None
 
-    def __init__(self, seed=1234):
+    def __init__(self, alpha=None, family=None, seed=1234):
         self.cop = CopulaGenerator()
         self.seed = seed
+
 
     def choose_family(self, family):
         switcher = {
@@ -28,19 +31,20 @@ class MultivariatePoisson:
         num_dim = 1
         try:
             num_dim = int(size)
-            shape = (num_dim, 1000)
+            shape = (num_dim, 100)
         except:
-            shape = size
+          shape = size
+          num_dim = size[0]
         if mu is None:  # if no vars is passed, randomly generate dependence
-            mu = np.random.uniform(0.1, 10, size=size)
+            mu = np.random.uniform(0.1, 10, size=num_dim)
         if family.lower() == "clayton":
             copulas = self.cop.MultiDimensionalClayton(1.5, d=shape)
         elif family.lower() == "gumbel":
             copulas = self.cop.MultiDimensionalGumbel(1.5, d=shape)
         elif family.lower() == "gaussian":
             if cov is None:
-                cov = skd.make_spd_matrix(size)
-            copulas = self.cop.Gaussian(cov)
+                cov = skd.make_spd_matrix(num_dim)
+            copulas = self.cop.Gaussian(cov, shape[1])
         else:
             print("No valid family set. Defaulted to the Clayton family.")
         for i in range(num_dim):
@@ -52,18 +56,31 @@ class MultivariatePoisson:
         for cdf in args:
             print("hey")
 
-    def pmf(self, x, mu):
-        dim = len(x)
-        m = list(itertools.combinations_with_replacement([0, 1], dim))
+    def subtract_correct_m(self, x, m):
+        arr = []
+        for i in range(x.shape[0]):
+            if m[i] == 1:
+                arr.append(x[i] - 1)
+            else:
+                arr.append(x[i])
+        return np.array(arr)
+
+    def pmf(self, x, mu, copula):
+        dim = x.shape[0]
+        num_data = x.shape[1]
+        m = list(itertools.combinations_with_replacement([0, 1], num_data))
         sum_m = np.array([sum(i) for i in m])
-        sum_k = np.zeros(dim)
-        for k in range(dim):
+        arr = []
+        sum_k = np.zeros(x[0].shape)
+        for k in range(num_data):
             indices = np.array(np.where(sum_m == k))
             correct_ms = np.take(m, indices.flatten(), axis=0)
-            sum_fx = np.zeros(dim)
+            sum_fx = np.zeros(num_data)
             for correct_m in correct_ms:
-                sum_fx = np.add(sum_fx,
-                                poisson.cdf(np.subtract(x, correct_m), mu[0]))  # sum elements from the element-wise
+                sub = self.subtract_correct_m(x, correct_m)
+                cdf = copula.joint_cdf(sub, mu)
+                sum_fx = np.add(sum_fx, cdf)
             # substraction between the original x input array and the values mi such that m sums up to k
-            sum_k = np.add(sum_k, ((-1) ** k * sum_fx))
-        return sum_k
+            sum_k = np.add(sum_k, (((-1) ** k) * sum_fx))
+        arr.append(sum_k)
+        return np.array(arr).flatten()
