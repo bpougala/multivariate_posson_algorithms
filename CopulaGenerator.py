@@ -114,7 +114,10 @@ class CopulaGenerator:
 
     def joint_cdf(self, data, mu):
         if self.family.lower() == "gaussian":
-            arg = data[0]
+            dim = data.shape[1]
+            num_dim = data.shape[0]
+            for i in range(num_dim):
+                cdf = poisson.cdf
         elif self.family.lower() == "clayton":
             dim = data.shape[1]
             num_dim = data.shape[0]
@@ -128,4 +131,15 @@ class CopulaGenerator:
             neg_alpha = -1/self.alpha
             return np.array([y ** neg_alpha for y in arr])
         elif self.family.lower() == "gumbel":
-            arg = data[0]
+            dim = data.shape[1]
+            num_dim = data.shape[0]
+            arr = np.zeros(dim)
+            for i in range(num_dim):
+                cdf = poisson.cdf(data[i], mu[i])
+                log_u = np.array([(- np.log(x))**self.alpha for x in cdf])
+                arr = np.add(arr, log_u)
+
+            arr = -(arr ** (1/self.alpha))
+            arr = np.exp(arr)
+
+            return arr
