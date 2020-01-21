@@ -1,6 +1,8 @@
 from scipy.stats import multivariate_normal, norm, poisson, gamma, levy_stable
 import numpy as np
 import math
+import sklearn.datasets as skd
+
 
 
 class CopulaGenerator:
@@ -112,13 +114,24 @@ class CopulaGenerator:
             arr.append(poiss)
         return np.asarray(arr)
 
-    def joint_cdf(self, data, mu):
+    def joint_cdf(self, data, mu=None):
+        # The entire CDF is zero if at least one coordinate is 0 
         if self.family.lower() == "gaussian":
+            if mu is None or mu.size == 0:
+                raise ValueError("You must provide a non-empty NumPy array for mu")
             dim = data.shape[1]
             num_dim = data.shape[0]
+            cor_matrix = skd.make_spd_matrix(dim)
+            second_arr = []
             for i in range(num_dim):
-                cdf = poisson.cdf
+                second_arr.append(norm.ppf(poisson.cdf(data[i], mu[i])))
+            cdfs = np.array(second_arr)
+            print(cdfs)
+            arr = multivariate_normal.cdf(cdfs, mean=None, cov=cor_matrix)
+            return arr
         elif self.family.lower() == "clayton":
+            if mu is None or mu.size == 0:
+                raise ValueError("You must provide a non-empty NumPy array for mu")
             dim = data.shape[1]
             num_dim = data.shape[0]
             arr = np.zeros(dim)
