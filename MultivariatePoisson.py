@@ -3,6 +3,7 @@ from scipy.stats import poisson
 from CopulaGenerator import CopulaGenerator
 import sklearn.datasets as skd
 import itertools
+from scipy.optimize import minimize
 
 
 class MultivariatePoisson:
@@ -84,3 +85,16 @@ class MultivariatePoisson:
             sum_k = np.add(sum_k, (((-1) ** k) * sum_fx))
         arr.append(sum_k)
         return np.array(arr).flatten()
+
+    def log_likelihood(self, alpha, data, poiss, mean, family):
+        copula = CopulaGenerator(alpha, family)
+        pm = poiss.pmf(data, mean, copula)
+        pm[pm == 0] = 1e-3
+        return -sum(np.log10(pm))
+
+    def optimise_params(self, data, copula):
+        mean = np.array([np.mean(x) for x in data])
+        poiss = MultivariatePoisson(copula.alpha, copula.family)
+
+        res = minimize(self.log_likelihood, np.array([copula.alpha]), (data, poiss, mean, copula.family), method='powell', options={'disp': True})
+        return res.x, mean
