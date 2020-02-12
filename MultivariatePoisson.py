@@ -12,10 +12,12 @@ class MultivariatePoisson:
     alpha = None
     family = None
 
-    def __init__(self, alpha=None, family=None, seed=1234):
-        self.cop = CopulaGenerator()
+    def __init__(self, family, alpha=None, cov=None, seed=1234):
+        self.alpha = alpha
+        self.family = family
+        self.cov = cov
+        self.cop = CopulaGenerator(family=family, alpha=alpha, cov=None)
         self.seed = seed
-
 
     def choose_family(self, family):
         switcher = {
@@ -25,7 +27,7 @@ class MultivariatePoisson:
         }
         return switcher.get(family, None)
 
-    def rvs(self, family, mu=None, size=1, random_state=None, cov=None):
+    def rvs(self, mu=None, size=1, random_state=None, cov=None):
         # Generates random samples from the given family of copulas
         arr = []
         copulas = None
@@ -34,22 +36,23 @@ class MultivariatePoisson:
             num_dim = int(size)
             shape = (num_dim, 100)
         except:
-          shape = size
-          num_dim = size[0]
+            shape = size
+            num_dim = size[0]
         if mu is None:  # if no vars is passed, randomly generate dependence
             mu = np.random.uniform(0.1, 10, size=num_dim)
-        if family.lower() == "clayton":
-            copulas = self.cop.MultiDimensionalClayton(1.5, d=shape)
-        elif family.lower() == "gumbel":
-            copulas = self.cop.MultiDimensionalGumbel(1.5, d=shape)
-        elif family.lower() == "gaussian":
+        if self.family.lower() == "clayton":
+            copulas = self.cop.MultiDimensionalClayton(d=shape)
+        elif self.family.lower() == "gumbel":
+            copulas = self.cop.MultiDimensionalGumbel(d=shape)
+        elif self.family.lower() == "gaussian":
             if cov is None:
                 cov = skd.make_spd_matrix(num_dim)
-            copulas = self.cop.Gaussian(cov, shape[1])
+                self.cop.cov = cov
+            copulas = self.cop.Gaussian(shape[1])
         else:
             print("No valid family set. Defaulted to the Clayton family.")
         for i in range(num_dim):
-            poiss = np.array(poisson.ppf(copulas[i], mu[i]))
+            poiss = np.array(poisson.ppf(copulas[i], mu[i]), dtype=float)
             arr.append(poiss)
         return np.array(arr), mu
 
@@ -66,7 +69,7 @@ class MultivariatePoisson:
                 arr.append(x[i])
         return np.array(arr)
 
-    def pmf(self, x, mu, copula):
+    def pmf(self, x, mu):
         dim = x.shape[0]
         num_data = x.shape[1]
         m = list(itertools.combinations_with_replacement([0, 1], num_data))
@@ -79,22 +82,33 @@ class MultivariatePoisson:
             sum_fx = np.zeros(num_data)
             for correct_m in correct_ms:
                 sub = self.subtract_correct_m(x, correct_m)
-                cdf = copula.joint_cdf(sub, mu)
+                cdf = self.cop.joint_cdf(sub, mu)
                 sum_fx = np.add(sum_fx, cdf)
             # substraction between the original x input array and the values mi such that m sums up to k
             sum_k = np.add(sum_k, (((-1) ** k) * sum_fx))
         arr.append(sum_k)
         return np.array(arr).flatten()
 
-    def log_likelihood(self, alpha, data, poiss, mean, family):
-        copula = CopulaGenerator(alpha, family)
-        pm = poiss.pmf(data, mean, copula)
+    def log_likelihood_archimedean(self, alpha, data, mean, family):
+        copula = CopulaGenerator(family=family, alpha=alpha)
+        pm = self.pmf(data, mean, copula)
+        pm[pm == 0] = 1e-3
+        return -sum(np.log10(pm))
+
+    def log_likelihood_gaussian(self, cov, data, mean):
+        copula = CopulaGenerator(family="gaussian", cov=cov)
+        pm = self.pmf(data, mean, copula)
         pm[pm == 0] = 1e-3
         return -sum(np.log10(pm))
 
     def optimise_params(self, data, copula):
         mean = np.array([np.mean(x) for x in data])
-        poiss = MultivariatePoisson(copula.alpha, copula.family)
-
-        res = minimize(self.log_likelihood, np.array([copula.alpha]), (data, poiss, mean, copula.family), method='powell', options={'disp': True})
-        return res.x, mean
+        if copula.family == "gaussian":
+            print("this")
+            poiss = MultivariatePoisson(family="gaussian")
+            return
+        else:
+            poiss = MultivariatePoisson(copula.alpha, copula.family)
+            res = minimize(self.log_likelihood_archimedean, np.array([copula.alpha]),
+                           (data, poiss, mean, copula.family), method='powell', options={'disp': True})
+            return res.x, mean
