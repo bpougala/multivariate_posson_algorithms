@@ -1,9 +1,11 @@
-import numpy as np
-from scipy.stats import poisson
-from CopulaGenerator import CopulaGenerator
-import sklearn.datasets as skd
 import itertools
+
+import numpy as np
+import sklearn.datasets as skd
 from scipy.optimize import minimize
+from scipy.stats import poisson
+
+from CopulaGenerator import CopulaGenerator
 
 
 class MultivariatePoisson:
@@ -91,7 +93,8 @@ class MultivariatePoisson:
 
     def log_likelihood_archimedean(self, alpha, data, mean, family):
         copula = CopulaGenerator(family=family, alpha=alpha)
-        pm = self.pmf(data, mean, copula)
+        poiss = MultivariatePoisson(family=family, alpha=alpha)
+        pm = poiss.pmf(data, mean)
         pm[pm == 0] = 1e-3
         return -sum(np.log10(pm))
 
@@ -101,14 +104,14 @@ class MultivariatePoisson:
         pm[pm == 0] = 1e-3
         return -sum(np.log10(pm))
 
-    def optimise_params(self, data, copula):
+    def optimise_params(self, data, d_mean, start_alpha):
         mean = np.array([np.mean(x) for x in data])
-        if copula.family == "gaussian":
+        if self.family == "gaussian":
             print("this")
             poiss = MultivariatePoisson(family="gaussian")
             return
         else:
-            poiss = MultivariatePoisson(copula.alpha, copula.family)
-            res = minimize(self.log_likelihood_archimedean, np.array([copula.alpha]),
-                           (data, poiss, mean, copula.family), method='powell', options={'disp': True})
+            res = minimize(self.log_likelihood_archimedean, np.array([start_alpha]),
+                           (data, d_mean, self.family), options={'disp': True})
+            print(res)
             return res.x, mean

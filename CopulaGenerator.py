@@ -1,7 +1,8 @@
-from scipy.stats import multivariate_normal, norm, poisson, gamma, levy_stable
-import numpy as np
 import math
+
+import numpy as np
 import sklearn.datasets as skd
+from scipy.stats import multivariate_normal, norm, poisson, gamma, levy_stable
 
 
 class CopulaGenerator:
@@ -138,11 +139,15 @@ class CopulaGenerator:
             dim = data.shape[1]
             num_dim = data.shape[0]
             arr = np.zeros(dim)
+            gau = 1e-3
+
             for j in range(data.shape[0]):
                 cdf = poisson.cdf(data[j], mu[j])
-                raised_to_power = [x ** -self.alpha for x in cdf]  # TODO: fix the zero-raised-to-negative-power issue
+                raised_to_power = [np.maximum(x, gau) ** -self.alpha for x in
+                                   cdf]  # TODO: fix the zero-raised-to-negative-power issue
                 arr = np.add(arr, raised_to_power)
             arr = 1 - num_dim + arr
+            arr = np.maximum(arr, gau)  # get rid of all the zero values
             pow = np.power(arr, (-1 / self.alpha))
             neg_alpha = -1 / self.alpha
             return np.array([y ** neg_alpha for y in arr])
