@@ -41,6 +41,7 @@ class MultivariatePoisson:
         except:
             shape = size
             num_dim = size[0]
+
         if mu is None:  # if no vars is passed, randomly generate dependence
             mu = np.random.uniform(0.1, 10, size=num_dim)
         if self.family.lower() == "clayton":
@@ -51,7 +52,7 @@ class MultivariatePoisson:
             if self.cov is None:
                 cov = skd.make_spd_matrix(num_dim)
                 self.cop.cov = cov
-            copulas = self.cop.Gaussian(shape[1]) #TODO: fix the parameters to match the ones from CopulaGenerator
+            copulas = self.cop.Gaussian(shape) #TODO: fix the parameters to match the ones from CopulaGenerator
         else:
             print("No valid family set. Defaulted to the Clayton family.")
         for i in range(num_dim):

@@ -129,8 +129,8 @@ class CopulaGenerator:
             for i in range(num_dim):
                 second_arr.append(norm.ppf(poisson.cdf(data[i], mu[i])))
             cdfs = np.array(second_arr)
-            print(cdfs)
             arr = multivariate_normal.cdf(cdfs, mean=mu, cov=cov)
+            print(arr)
             return arr
         elif self.family.lower() == "clayton":
             if mu is None or mu.size == 0:
