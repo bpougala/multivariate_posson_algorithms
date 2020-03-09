@@ -1,8 +1,7 @@
-import math
-
-import numpy as np
-import sklearn.datasets as skd
 from scipy.stats import multivariate_normal, norm, poisson, gamma, levy_stable
+import numpy as np
+import math
+import sklearn.datasets as skd
 
 
 class CopulaGenerator:
@@ -43,12 +42,12 @@ class CopulaGenerator:
     def removeNans(self, arr):
         return arr[~np.isnan(arr)]
 
-    def Gaussian(self, lambdas=None):
+    def Gaussian(self, d=(2, 1000), lambdas=None):
         if lambdas is None:  # if no vars is passed, randomly generate dependence
             lambdas = np.random.uniform(1e-5, 10, size=self.cov.shape[1])
         mean = np.zeros(self.cov.shape[1])
-        val = np.random.multivariate_normal(mean, self.cov, 2000).T
-        arr_poisson = np.zeros((val.shape[0], 2000))
+        val = np.random.multivariate_normal(mean, self.cov, d[1]).T
+        arr_poisson = np.zeros((val.shape[0], d[1]))
         distribution = norm()
         iter = 0
         for matrix in val:
@@ -131,7 +130,7 @@ class CopulaGenerator:
                 second_arr.append(norm.ppf(poisson.cdf(data[i], mu[i])))
             cdfs = np.array(second_arr)
             print(cdfs)
-            arr = multivariate_normal.cdf(cdfs, mean=None, cov=cov)
+            arr = multivariate_normal.cdf(cdfs, mean=mu, cov=cov)
             return arr
         elif self.family.lower() == "clayton":
             if mu is None or mu.size == 0:
@@ -143,11 +142,10 @@ class CopulaGenerator:
 
             for j in range(data.shape[0]):
                 cdf = poisson.cdf(data[j], mu[j])
-                raised_to_power = [np.maximum(x, gau) ** -self.alpha for x in
-                                   cdf]  # TODO: fix the zero-raised-to-negative-power issue
+                raised_to_power = [np.maximum(x, gau) ** -self.alpha for x in cdf]  # TODO: fix the zero-raised-to-negative-power issue
                 arr = np.add(arr, raised_to_power)
             arr = 1 - num_dim + arr
-            arr = np.maximum(arr, gau)  # get rid of all the zero values
+            arr = np.maximum(arr, gau) # get rid of all the zero values
             pow = np.power(arr, (-1 / self.alpha))
             neg_alpha = -1 / self.alpha
             return np.array([y ** neg_alpha for y in arr])
