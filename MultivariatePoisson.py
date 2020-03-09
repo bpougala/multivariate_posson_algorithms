@@ -30,7 +30,7 @@ class MultivariatePoisson:
         }
         return switcher.get(family, None)
 
-    def rvs(self, mu=None, size=1, random_state=None, cov=None):
+    def rvs(self, mu=None, size=1, random_state=None):
         # Generates random samples from the given family of copulas
         arr = []
         copulas = None
@@ -48,7 +48,7 @@ class MultivariatePoisson:
         elif self.family.lower() == "gumbel":
             copulas = self.cop.MultiDimensionalGumbel(d=shape)
         elif self.family.lower() == "gaussian":
-            if cov is None:
+            if self.cov is None:
                 cov = skd.make_spd_matrix(num_dim)
                 self.cop.cov = cov
             copulas = self.cop.Gaussian(shape[1]) #TODO: fix the parameters to match the ones from CopulaGenerator
