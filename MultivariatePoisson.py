@@ -10,7 +10,6 @@ from CopulaGenerator import CopulaGenerator
 
 class MultivariatePoisson:
     cop = None
-    cov = None
     seed = None
     alpha = None
     family = None
@@ -19,7 +18,7 @@ class MultivariatePoisson:
         self.alpha = alpha
         self.family = family
         self.cov = cov
-        self.cop = CopulaGenerator(family=family, alpha=alpha, cov=cov)
+        self.cop = CopulaGenerator(family=family, alpha=alpha, cov=None)
         self.seed = seed
 
     def choose_family(self, family):
@@ -30,7 +29,7 @@ class MultivariatePoisson:
         }
         return switcher.get(family, None)
 
-    def rvs(self, mu=None, size=1, random_state=None):
+    def rvs(self, mu=None, size=1, random_state=None, cov=None):
         # Generates random samples from the given family of copulas
         arr = []
         copulas = None
@@ -48,10 +47,10 @@ class MultivariatePoisson:
         elif self.family.lower() == "gumbel":
             copulas = self.cop.MultiDimensionalGumbel(d=shape)
         elif self.family.lower() == "gaussian":
-            if self.cov is None:
+            if cov is None:
                 cov = skd.make_spd_matrix(num_dim)
                 self.cop.cov = cov
-            copulas = self.cop.Gaussian(shape[1]) #TODO: fix the parameters to match the ones from CopulaGenerator
+            copulas = self.cop.Gaussian(shape[1])
         else:
             print("No valid family set. Defaulted to the Clayton family.")
         for i in range(num_dim):
@@ -99,20 +98,18 @@ class MultivariatePoisson:
         pm[pm == 0] = 1e-3
         return -sum(np.log10(pm))
 
-    def log_likelihood_gaussian(self, cov, data, mean, family):
+    def log_likelihood_gaussian(self, cov, data, mean):
         copula = CopulaGenerator(family="gaussian", cov=cov)
-        poiss = MultivariatePoisson(family=family, cov=cov)
-        pm = poiss.pmf(data, mean)
+        pm = self.pmf(data, mean, copula)
         pm[pm == 0] = 1e-3
         return -sum(np.log10(pm))
 
-    def optimise_params(self, data, d_mean, start_alpha=None, start_cov=None):
+    def optimise_params(self, data, d_mean, start_alpha):
         mean = np.array([np.mean(x) for x in data])
         if self.family == "gaussian":
             print("this")
             poiss = MultivariatePoisson(family="gaussian")
-            res = minimize(self.log_likelihood_gaussian, start_cov, (data, d_mean, start_cov), options={'disp': True})
-            return res.x, mean
+            return
         else:
             res = minimize(self.log_likelihood_archimedean, np.array([start_alpha]),
                            (data, d_mean, self.family), options={'disp': True})
