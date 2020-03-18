@@ -1,8 +1,7 @@
-import math
-
-import numpy as np
-import sklearn.datasets as skd
 from scipy.stats import multivariate_normal, norm, poisson, gamma, levy_stable
+import numpy as np
+import math
+import sklearn.datasets as skd
 
 
 class CopulaGenerator:
@@ -130,8 +129,8 @@ class CopulaGenerator:
             for i in range(num_dim):
                 second_arr.append(norm.ppf(poisson.cdf(data[i], mu[i])))
             cdfs = np.array(second_arr)
-            print(cdfs)
-            arr = multivariate_normal.cdf(cdfs, mean=None, cov=cov)
+            arr = multivariate_normal.cdf(cdfs, mean=mu, cov=cov)
+            print(arr)
             return arr
         elif self.family.lower() == "clayton":
             if mu is None or mu.size == 0:
