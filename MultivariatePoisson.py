@@ -115,6 +115,6 @@ class MultivariatePoisson:
             return res.x, mean
         else:
             res = minimize(self.log_likelihood_archimedean, np.array([start_alpha]),
-                           (data, d_mean, self.family), options={'disp': True})
+                           (data, d_mean, self.family), options={'disp': False})
             print(res)
             return res.x, mean
