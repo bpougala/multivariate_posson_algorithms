@@ -106,13 +106,11 @@ class MultivariatePoisson:
         pm[pm == 0] = 1e-3
         return -sum(np.log10(pm))
 
-    def optimise_params(self, data, d_mean, start_alpha=None, start_cov=None):
+    def optimise_params(self, data, d_mean, start_alpha=None):
         mean = np.array([np.mean(x) for x in data])
         if self.family == "gaussian":
-            print("this")
-            poiss = MultivariatePoisson(family="gaussian")
-            res = minimize(self.log_likelihood_gaussian, start_cov, (data, d_mean, start_cov), options={'disp': True})
-            return res.x, mean
+            cov_comb = np.corrcoef(data)
+            return cov_comb, mean
         else:
             res = minimize(self.log_likelihood_archimedean, np.array([start_alpha]),
                            (data, d_mean, self.family), options={'disp': False})
