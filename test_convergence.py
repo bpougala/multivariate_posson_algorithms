@@ -1,3 +1,4 @@
+import math
 import sys
 from functools import reduce
 
@@ -54,17 +55,34 @@ def kl_divergence(p, q):
 
 def generate_experiment(data_size, data_dimensions, family, alpha=None, cov=None):
     if family == "clayton" or "gumbel":
-        mp = mvp(family, alpha)
-        data, mean = mp.rvs(size=(data_dimensions, data_size))
-        x, mu = mp.optimise_params(data, mean, 11.0)
-        results_x.append(x)
+        avg = 0
+        for i in range(10):
+            mp = mvp(family, alpha)
+            data, mean = mp.rvs(size=(data_dimensions, data_size))
+            pmf = mp.pmf(data, mean)
+            alpha_hat, mu = mp.optimise_params(data, mean, 11.0)
+            mp_hat = mvp(family, alpha_hat[0])
+            pmf_hat = mp_hat.pmf(data, mu)
+            kl = kl_divergence(pmf, pmf_hat)
+            print("current kl: " + str(kl))
+            if not math.isinf(kl):
+                avg += kl
+        return avg / 10
 
 
 def main():
-    num_dimensions = int(sys.argv[1])
-    num_samples = int(sys.argv[2])
-    kl = generate_experiment_gaussian(num_dimensions, num_samples)
-    print("Kullback-Leibler value is now: " + str(kl))
+    mode = sys.argv[1]
+    num_dimensions = int(sys.argv[2])
+    num_samples = int(sys.argv[3])
+    alpha = float(sys.argv[4])
+    if mode == "clayton" or mode == "gumbel":
+        kld = generate_experiment(num_samples, num_dimensions, mode, alpha=alpha)
+        print(kld)
+    elif mode == "gaussian":
+        kl = generate_experiment_gaussian(num_dimensions, num_samples)
+        print("Kullback-Leibler value is now: " + str(kl))
+    else:
+        raise Exception("No valid copula family selected.")
 
 
 if __name__ == '__main__':

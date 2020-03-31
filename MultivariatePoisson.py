@@ -58,7 +58,7 @@ class MultivariatePoisson:
         for i in range(num_dim):
             poiss = np.array(poisson.ppf(copulas[i], mu[i]), dtype=float)
             arr.append(poiss)
-        return np.array(arr)
+        return np.array(arr), mu
 
     def cdf(self, x, mu):  # for marginal distributions
         e = np.array([(math.exp(-mu) * mu ** i) / math.factorial(i) for i in x])
