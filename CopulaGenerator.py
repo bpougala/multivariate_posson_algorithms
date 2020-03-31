@@ -1,7 +1,8 @@
-from scipy.stats import multivariate_normal, norm, poisson, gamma, levy_stable
-import numpy as np
 import math
+
+import numpy as np
 import sklearn.datasets as skd
+from scipy.stats import multivariate_normal, norm, poisson, gamma, levy_stable
 
 
 class CopulaGenerator:
@@ -73,7 +74,6 @@ class CopulaGenerator:
     def Clayton(self, x, alpha, d=(1000,)):
         s = np.random.RandomState(1234)
         self.alpha = alpha
-        # x = np.random.uniform(size=d)
         y = s.uniform(size=d)
         v = gamma.rvs(a=1 / alpha, scale=1, size=d, random_state=s)
         u_x = self.clayton_generator(-np.log10(x) / v)
@@ -129,8 +129,7 @@ class CopulaGenerator:
             for i in range(num_dim):
                 second_arr.append(norm.ppf(poisson.cdf(data[i], mu[i])))
             cdfs = np.array(second_arr)
-            arr = multivariate_normal.cdf(cdfs, mean=mu, cov=cov)
-            print(arr)
+            arr = multivariate_normal.cdf(cdfs.T, mean=mu, cov=cov)
             return arr
         elif self.family.lower() == "clayton":
             if mu is None or mu.size == 0:

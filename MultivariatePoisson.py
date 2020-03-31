@@ -1,4 +1,5 @@
 import itertools
+import math
 
 import numpy as np
 import sklearn.datasets as skd
@@ -51,17 +52,17 @@ class MultivariatePoisson:
             if self.cov is None:
                 cov = skd.make_spd_matrix(num_dim)
                 self.cop.cov = cov
-            copulas = self.cop.Gaussian(shape[1]) #TODO: fix the parameters to match the ones from CopulaGenerator
+            copulas = self.cop.Gaussian(shape)  # TODO: fix the parameters to match the ones from CopulaGenerator
         else:
             print("No valid family set. Defaulted to the Clayton family.")
         for i in range(num_dim):
             poiss = np.array(poisson.ppf(copulas[i], mu[i]), dtype=float)
             arr.append(poiss)
-        return np.array(arr), mu
+        return np.array(arr)
 
-    def cdf(self, *args):
-        for cdf in args:
-            print("hey")
+    def cdf(self, x, mu):  # for marginal distributions
+        e = np.array([(math.exp(-mu) * mu ** i) / math.factorial(i) for i in x])
+        return np.cumsum(e)
 
     def subtract_correct_m(self, x, m):
         arr = []
@@ -72,7 +73,7 @@ class MultivariatePoisson:
                 arr.append(x[i])
         return np.array(arr)
 
-    def pmf(self, x, mu):
+    def pmf(self, x, mu):  # for multivariate distributions
         dim = x.shape[0]
         num_data = x.shape[1]
         m = list(itertools.combinations_with_replacement([0, 1], num_data))
@@ -106,7 +107,7 @@ class MultivariatePoisson:
         pm[pm == 0] = 1e-3
         return -sum(np.log10(pm))
 
-    def optimise_params(self, data, d_mean, start_alpha=None):
+    def optimise_params(self, data, d_mean=None, start_alpha=None):
         mean = np.array([np.mean(x) for x in data])
         if self.family == "gaussian":
             cov_comb = np.corrcoef(data)
@@ -114,5 +115,4 @@ class MultivariatePoisson:
         else:
             res = minimize(self.log_likelihood_archimedean, np.array([start_alpha]),
                            (data, d_mean, self.family), options={'disp': False})
-            print(res)
             return res.x, mean
