@@ -53,11 +53,11 @@ def kl_divergence(p, q):
     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
 
 
-def generate_experiment(data_size, data_dimensions, family, alpha=None, cov=None):
+def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50, cov=None):
     if family == "clayton" or "gumbel":
         avg = 0
         i = 0
-        for i in range(50):
+        for i in range(iter):
             mp = mvp(family, alpha)
             data, mean = mp.rvs(size=(data_dimensions, data_size))
             pmf = mp.pmf(data, mean)
@@ -76,8 +76,9 @@ def main():
     num_dimensions = int(sys.argv[2])
     num_samples = int(sys.argv[3])
     alpha = float(sys.argv[4])
+    iter = int(sys.argv[5])
     if mode == "clayton" or mode == "gumbel":
-        kld = generate_experiment(num_samples, num_dimensions, mode, alpha=alpha)
+        kld = generate_experiment(num_samples, num_dimensions, mode, alpha=alpha, iter=iter)
         print(kld)
     elif mode == "gaussian":
         kl = generate_experiment_gaussian(num_dimensions, num_samples)
