@@ -17,7 +17,7 @@ def generate_experiment_gaussian(data_size, data_dimensions, cov=None):
         cov = np.array([[1, 0.3], [0.3, 1]])
     mean = np.array([2, 7])
     print("Running the experiment")
-    multipoiss = mvp.MultivariatePoisson(cov=cov, family="gaussian")
+    multipoiss = mvp(cov=cov, family="gaussian")
     data = multipoiss.rvs(mu=mean, size=(data_dimensions, data_size))
     pmf = multipoiss.pmf(data, mean)
     cov_hat, mean_hat = multipoiss.optimise_params(data=data)
