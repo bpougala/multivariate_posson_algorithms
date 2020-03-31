@@ -56,7 +56,7 @@ def kl_divergence(p, q):
 def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50, cov=None):
     if family == "clayton" or "gumbel":
         avg = 0
-        i = 0
+        j = 0
         for i in range(iter):
             mp = mvp(family, alpha)
             data, mean = mp.rvs(size=(data_dimensions, data_size))
@@ -68,8 +68,8 @@ def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50,
             if not math.isinf(kl):
                 print("kl " + str(i) + " " + str(kl))
                 avg += kl
-                i += 1
-        return avg / i
+                j += 1
+        return avg / j
 
 
 def main():
