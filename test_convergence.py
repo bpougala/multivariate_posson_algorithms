@@ -12,7 +12,7 @@ def Average(lst):
     return reduce(lambda a, b: a + b, lst) / len(lst)
 
 
-def generate_experiment_gaussian(data_size, data_dimensions, cov):
+def generate_experiment_gaussian(data_size, data_dimensions, cov=None):
     if cov is None:
         cov = np.array([1, 0.3], [0.3, 1])
     mean = np.array[2, 7]
@@ -38,10 +38,7 @@ def generate_experiment(data_size, data_dimensions, family, alpha=None, cov=None
 
 
 def main():
-    for i in range(50):
-        generate_experiment(40, 2, "clayton", 4.6)
-
-    print(Average(results_x))
+    generate_experiment_gaussian(20, 2)
 
 
 if __name__ == '__main__':
