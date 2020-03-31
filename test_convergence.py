@@ -37,7 +37,6 @@ def generate_experiment_gaussian(num_dim, num_samples):
     mean = np.random.randint(0, 20, size=num_dim)
     multipoiss = mvp(cov=cov, family="gaussian")
     data = multipoiss.rvs(mu=mean, size=(cov.shape[0], num_samples))
-    print("data: " + str(data))
     pmf = multipoiss.pmf(data, mean)
     cov_hat, mean_hat = multipoiss.optimise_params(data=data)
     multipoiss_hat = mvp(cov=cov_hat, family="gaussian")
