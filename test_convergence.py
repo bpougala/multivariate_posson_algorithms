@@ -57,7 +57,7 @@ def generate_experiment(data_size, data_dimensions, family, alpha=None, cov=None
     if family == "clayton" or "gumbel":
         avg = 0
         i = 0
-        for i in range(10):
+        for i in range(50):
             mp = mvp(family, alpha)
             data, mean = mp.rvs(size=(data_dimensions, data_size))
             pmf = mp.pmf(data, mean)
