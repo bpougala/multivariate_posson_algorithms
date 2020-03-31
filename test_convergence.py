@@ -66,6 +66,7 @@ def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50,
             pmf_hat = mp_hat.pmf(data, mu)
             kl = kl_divergence(pmf, pmf_hat)
             if not math.isinf(kl):
+                print("kl " + str(i) + " " + str(kl))
                 avg += kl
                 i += 1
         return avg / i
