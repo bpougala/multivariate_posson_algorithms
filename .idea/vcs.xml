@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/copulaproject" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/multivariate_poisson_algorithms" vcs="Git" />
   </component>
 </project>
