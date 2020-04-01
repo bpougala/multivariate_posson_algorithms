@@ -74,11 +74,11 @@ def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50,
 
 def main():
     mode = sys.argv[1]
-    num_dimensions = int(sys.argv[2])
-    num_samples = int(sys.argv[3])
-    alpha = float(sys.argv[4])
-    iter = int(sys.argv[5])
-    file = open("results-kl-div-1.txt", "a+")
+    # num_dimensions = int(sys.argv[2])
+    # num_samples = int(sys.argv[3])
+    # alpha = float(sys.argv[4])
+    iterations = int(sys.argv[2])
+    file = open("results-kl-div-2.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
         samps = [20, 40, 100]
         dims = [3, 4, 5, 6]
@@ -86,7 +86,7 @@ def main():
         for d in dims:
             for s in samps:
                 for a in alphas:
-                    kld = generate_experiment(s, d, mode, alpha=a, iter=iter)
+                    kld = generate_experiment(s, d, mode, alpha=a, iter=iterations)
                     file.write(str(d) + " " + str(s) + " " + str(a) + " " + str(kld) + "\n")
         file.close()
     elif mode == "gaussian":
