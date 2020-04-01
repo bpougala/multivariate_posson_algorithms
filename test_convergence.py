@@ -91,7 +91,6 @@ def main():
         file.close()
     elif mode == "gaussian":
         kl = generate_experiment_gaussian(num_dimensions, num_samples)
-        print("Kullback-Leibler value is now: " + str(kl))
     else:
         raise Exception("No valid copula family selected.")
 
