@@ -57,7 +57,7 @@ def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50,
     if family == "clayton" or "gumbel":
         avg = 0
         j = 0
-        for i in range(iter):
+        while j < iter:
             mp = mvp(family, alpha)
             data, mean = mp.rvs(size=(data_dimensions, data_size))
             pmf = mp.pmf(data, mean)
@@ -78,7 +78,7 @@ def main():
     # num_samples = int(sys.argv[3])
     # alpha = float(sys.argv[4])
     iterations = int(sys.argv[2])
-    file = open("results-kl-div-2.txt", "a+", buffering=1)
+    file = open("results-kl-div-3.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
         samps = [20, 40, 100]
         dims = [3, 4, 5, 6]
