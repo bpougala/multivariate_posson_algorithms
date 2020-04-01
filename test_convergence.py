@@ -78,9 +78,16 @@ def main():
     num_samples = int(sys.argv[3])
     alpha = float(sys.argv[4])
     iter = int(sys.argv[5])
+    file = open("results-kl-div.txt", "a")
     if mode == "clayton" or mode == "gumbel":
-        kld = generate_experiment(num_samples, num_dimensions, mode, alpha=alpha, iter=iter)
-        print(kld)
+        samps = [20, 40, 100]
+        dims = [2, 3, 4, 5, 6]
+        for d in dims:
+            for s in samps:
+                kld = generate_experiment(s, d, mode, alpha=alpha, iter=iter)
+                print(str(d) + " " + str(s) + " " + str(kld))
+                file.write(str(d) + " " + str(s) + " " + str(kld))
+        file.close()
     elif mode == "gaussian":
         kl = generate_experiment_gaussian(num_dimensions, num_samples)
         print("Kullback-Leibler value is now: " + str(kl))
