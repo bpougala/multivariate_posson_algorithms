@@ -77,10 +77,10 @@ def main():
     # num_samples = int(sys.argv[3])
     # alpha = float(sys.argv[4])
     iterations = int(sys.argv[2])
-    file = open("results-kl-div-6.txt", "a+", buffering=1)
+    file = open("results-kl-div.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
-        samps = [40, 100]
-        dims = [4]
+        samps = [20, 40, 100, 1000]
+        dims = [2, 3, 4, 5, 6]
         alphas = [1.6, 4.6, 11.6]
         for d in dims:
             for s in samps:
