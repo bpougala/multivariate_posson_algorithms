@@ -66,7 +66,7 @@ def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50,
             pmf_hat = mp_hat.pmf(data, mu)
             kl = kl_divergence(pmf, pmf_hat)
             if not math.isinf(kl):
-                print("kl " + str(i) + " " + str(kl))
+                print("kl " + str(j) + " " + str(kl))
                 avg += kl
                 j += 1
         return avg / j
@@ -78,17 +78,16 @@ def main():
     num_samples = int(sys.argv[3])
     alpha = float(sys.argv[4])
     iter = int(sys.argv[5])
-    file = open("results-kl-div.txt", "a")
+    file = open("results-kl-div-1.txt", "a+")
     if mode == "clayton" or mode == "gumbel":
         samps = [20, 40, 100]
-        dims = [2, 3, 4, 5, 6]
+        dims = [3, 4, 5, 6]
         alphas = [1.6, 4.6, 11.6]
         for d in dims:
             for s in samps:
                 for a in alphas:
                     kld = generate_experiment(s, d, mode, alpha=a, iter=iter)
-                    print(str(d) + " " + str(s) + " " + str(a) + " " + str(kld))
-                    file.write(str(d) + " " + str(s) + " " + str(a) + " " + str(kld))
+                    file.write(str(d) + " " + str(s) + " " + str(a) + " " + str(kld) + "\n")
         file.close()
     elif mode == "gaussian":
         kl = generate_experiment_gaussian(num_dimensions, num_samples)
