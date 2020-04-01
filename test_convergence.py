@@ -82,11 +82,13 @@ def main():
     if mode == "clayton" or mode == "gumbel":
         samps = [20, 40, 100]
         dims = [2, 3, 4, 5, 6]
+        alphas = [1.6, 4.6, 11.6]
         for d in dims:
             for s in samps:
-                kld = generate_experiment(s, d, mode, alpha=alpha, iter=iter)
-                print(str(d) + " " + str(s) + " " + str(kld))
-                file.write(str(d) + " " + str(s) + " " + str(kld))
+                for a in alphas:
+                    kld = generate_experiment(s, d, mode, alpha=a, iter=iter)
+                    print(str(d) + " " + str(s) + " " + str(a) + " " + str(kld))
+                    file.write(str(d) + " " + str(s) + " " + str(a) + " " + str(kld))
         file.close()
     elif mode == "gaussian":
         kl = generate_experiment_gaussian(num_dimensions, num_samples)
