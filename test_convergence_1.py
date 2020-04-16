@@ -63,7 +63,7 @@ def generate_experiment(data_size, family, alpha=None, iter=50, cov=None):
             pmf = mp.pmf(data, mean)
             alpha_hat, mu = mp.optimise_params(data, mean, 11.0)
             mp_hat = mvp(family, alpha_hat[0])
-            pmf_hat = mp_hat.pmf(data, mu)
+            pmf_hat = mp_hat.parallel_pmf(data, mu)
             kl = kl_divergence(pmf, pmf_hat)
             if not math.isinf(kl):
                 # print("kl " + str(j) + " " + str(kl))
@@ -88,7 +88,7 @@ def main():
     # num_samples = int(sys.argv[3])
     # alpha = float(sys.argv[4])
     iterations = int(sys.argv[2])
-    file = open("results-kl-div-10.txt", "a+", buffering=1)
+    file = open("results-kl-div-11.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
         samps = [20, 80, 100, 200, 400, 800, 1000, 1400]
         alphas = [1.6, 4.6, 11.6]
