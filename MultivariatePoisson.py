@@ -184,7 +184,7 @@ class MultivariatePoisson:
             d_mean = np.array([np.mean(x) for x in data])
         if self.family == "gaussian":
             cov_comb = np.corrcoef(data)
-            return cov_comb, mean
+            return cov_comb, d_mean
         else:
             res = minimize(self.log_likelihood_archimedean, np.array([start_alpha]),
                            (data, d_mean, self.family), options={'disp': False})
