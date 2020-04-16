@@ -40,6 +40,22 @@ class CopulaGenerator:
     def rvs(self, x):
         print(x)
 
+    def sin_cdf(self, x, mu):  # for marginal distributions
+        arr = []
+        for i in range(x.shape[0]):
+            # a = mu**i
+            # b = math.factorial(i)
+            # a = math.log(mu) * i
+            # b = sum(math.log(ii) for ii in range(1, i+1))
+            # print("i: " + str(i) + " b: " + str(b))
+            # arr.append((mu**i)/math.factorial(i))
+            # c = math.exp(a)
+            # d = math.exp(b)
+            arr.append(poisson.cdf(i, mu))
+
+        # return np.cumsum(math.exp(-mu) * np.array(arr))
+        return np.array(arr)
+
     def removeNans(self, arr):
         return arr[~np.isnan(arr)]
 
@@ -115,6 +131,31 @@ class CopulaGenerator:
             arr.append(poiss)
         return np.asarray(arr)
 
+    def biv_cdf(self, data, mu):
+        j0 = self.sin_cdf(data[0], mu[0])
+        j1 = self.sin_cdf(data[1], mu[1])
+        # print("j0: " + str(j0))
+        if self.family.lower() == "gumbel":
+            x0 = (-np.log(j0)) ** self.alpha
+            x1 = (-np.log(j1)) ** self.alpha
+            # print("x0: " + str(x0))
+            # print("x1: " + str(x1))
+            y = np.add.outer(x0, x1)
+            z = y ** 1 / self.alpha
+            # print("z:" + str(z))
+            w = np.exp(-z)
+            return w
+        elif self.family.lower() == "clayton":
+            x0 = j0 ** (-self.alpha)
+            x1 = j1 ** (-self.alpha)
+            y = np.add.outer(x0, x1)
+            y = -1 + y
+            y[y < 0] = 0
+            z = np.power(y, -1 / self.alpha)
+            return z
+        else:
+            return "hey"
+
     def joint_cdf(self, data, mu=None):
         # The entire CDF is zero if at least one coordinate is 0
         if self.family.lower() == "gaussian":
@@ -127,7 +168,7 @@ class CopulaGenerator:
                 cov = skd.make_spd_matrix(dim)
             second_arr = []
             for i in range(num_dim):
-                second_arr.append(norm.ppf(poisson.cdf(data[i], mu[i])))
+                second_arr.append(norm.ppf(self.cdf(data[i], mu[i])))
             cdfs = np.array(second_arr)
             arr = multivariate_normal.cdf(cdfs.T, mean=mu, cov=cov)
             return arr
@@ -140,11 +181,12 @@ class CopulaGenerator:
             gau = 1e-3
 
             for j in range(data.shape[0]):
-                cdf = poisson.cdf(data[j], mu[j])
-                raised_to_power = [np.maximum(x, gau) ** -self.alpha for x in cdf]  # TODO: fix the zero-raised-to-negative-power issue
+                cdf = self.cdf(data[j], mu[j])
+                raised_to_power = [np.maximum(x, gau) ** -self.alpha for x in
+                                   cdf]  # TODO: fix the zero-raised-to-negative-power issue
                 arr = np.add(arr, raised_to_power)
             arr = 1 - num_dim + arr
-            arr = np.maximum(arr, gau) # get rid of all the zero values
+            arr = np.maximum(arr, gau)  # get rid of all the zero values
             pow = np.power(arr, (-1 / self.alpha))
             neg_alpha = -1 / self.alpha
             return np.array([y ** neg_alpha for y in arr])
@@ -153,9 +195,10 @@ class CopulaGenerator:
             num_dim = data.shape[0]
             arr = np.zeros(dim)
             for i in range(num_dim):
-                cdf = poisson.cdf(data[i], mu[i])
-                log_u = np.array([(- np.log(x)) ** self.alpha for x in cdf])
-                arr = np.add(arr, log_u)
+                cdf = self.cdf(data[i], mu[i])
+                u = [-np.log(u_i) ** self.alpha for u_i in cdf]
+                # log_u = np.array([(- np.log(x)) ** self.alpha for x in cdf])
+                arr = np.add(arr, u)
 
             arr = -(arr ** (1 / self.alpha))
             arr = np.exp(arr)

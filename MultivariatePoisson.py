@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 import sklearn.datasets as skd
-from scipy.optimize import minimize
+from scipy.optimize import minimize, minimize_scalar
 from scipy.stats import poisson
 
 from CopulaGenerator import CopulaGenerator
@@ -61,8 +61,11 @@ class MultivariatePoisson:
         return np.array(arr), mu
 
     def cdf(self, x, mu):  # for marginal distributions
-        e = np.array([(math.exp(-mu) * mu ** i) / math.factorial(i) for i in x])
-        return np.cumsum(e)
+        arr = []
+        for i in range(x.shape[0]):
+            arr.append((mu ** i) / math.factorial(i))
+
+        return np.cumsum(math.exp(-mu) * np.array(arr))
 
     def subtract_correct_m(self, x, m):
         arr = []
@@ -73,46 +76,138 @@ class MultivariatePoisson:
                 arr.append(x[i])
         return np.array(arr)
 
-    def pmf(self, x, mu):  # for multivariate distributions
+    def mean(self, x):
+        arr = []
+        for dim in x:
+            mu = sum(dim) / len(dim)
+            arr.append(mu)
+        return np.array(arr)
+
+    def subtract_m(self, x, m):
+        arr = []
+        for i, elem in enumerate(x):
+            temp = elem - m[i]
+            arr.append(temp)
+
+        arr = np.array(arr)
+        arr[arr < 0] = 0
+        return arr
+
+    def parallel_pmf(self, x, mu):
         dim = x.shape[0]
         num_data = x.shape[1]
-        m = list(itertools.combinations_with_replacement([0, 1], num_data))
+        m = list(itertools.product([0, 1], repeat=dim))
         sum_m = np.array([sum(i) for i in m])
-        arr = []
-        sum_k = np.zeros(x[0].shape)
-        for k in range(num_data):
+        temp = self.cop.biv_cdf(x, mu)
+        sum_k = np.zeros(temp.shape)
+        for k in range(dim + 1):
             indices = np.array(np.where(sum_m == k))
             correct_ms = np.take(m, indices.flatten(), axis=0)
-            sum_fx = np.zeros(num_data)
+            sum_fx = np.zeros(temp.shape)
             for correct_m in correct_ms:
-                sub = self.subtract_correct_m(x, correct_m)
-                cdf = self.cop.joint_cdf(sub, mu)
+                sub = self.subtract_m(x, correct_m)
+                mean = self.mean(sub)
+                cdf = self.cop.biv_cdf(sub, mean)
                 sum_fx = np.add(sum_fx, cdf)
-            # substraction between the original x input array and the values mi such that m sums up to k
+            sum_fx = ((-1) ** k) * sum_fx
+            sum_k = np.add(sum_k, sum_fx)
+        return sum_k
+
+    def biv_pmf(self, x, mu):
+        dim = x.shape[0]
+        num_data = x.shape[1]
+        m = list(itertools.product([0, 1], repeat=dim))
+        sum_m = np.array([sum(i) for i in m])
+        arr = []
+        sum_k = np.zeros((num_data, num_data))
+        for k in range(dim + 1):
+            indices = np.array(np.where(sum_m == k))
+            correct_ms = np.take(m, indices.flatten(), axis=0)
+            for correct_m in correct_ms:
+                # print("correct_m: " + str(correct_m))
+                sub = self.subtract_m(x, correct_m)
+                # print("sub: " + str(sub))
+                sum_fx = np.zeros((num_data, num_data))
+                mean = self.mean(sub)
+                cdf = self.cop.biv_cdf(sub, mean)
+                sum_fx = np.add(sum_fx, cdf)
             sum_k = np.add(sum_k, (((-1) ** k) * sum_fx))
-        arr.append(sum_k)
+            arr.append(sum_k)
+        return np.array(arr)
+        # return np.array()
+        # cdfs = self.cop.biv_cdf(s
+
+    def pmf(self, x, mu):  # for multivariate distributions
+        print("hello")
+        dim = x.shape[0]
+        num_data = x.shape[1]
+        m = list(itertools.product([0, 1], repeat=num_data))
+        sum_m = np.array([sum(i) for i in m])
+        arr = []
+        sum_k = np.zeros((num_data, num_data))
+        for i in range(dim):
+            for k in range(num_data + 1):
+                indices = np.array(np.where(sum_m == k))
+                correct_ms = np.take(m, indices.flatten(), axis=0)
+                print("correct_ms: " + str(sum(correct_ms)))
+                sum_fx = np.zeros((num_data, num_data))
+                for correct_m in correct_ms:
+                    sub = self.subtract_m(x, correct_m)
+                    print("sub: " + str(sub))
+                    mean = self.mean(sub)
+                    cdf = self.cop.biv_cdf(sub, mean)
+                    # print("cdf: " + str(cdf))
+                    sum_fx = np.add(sum_fx, cdf)
+                    # print("sum_fx: " + str(sum_fx))
+                # substraction between the original x input array and the values mi such that m sums up to k
+                sum_k = np.add(sum_k, (((-1) ** k) * sum_fx))
+            arr.append(sum_k)
         return np.array(arr).flatten()
 
     def log_likelihood_archimedean(self, alpha, data, mean, family):
         copula = CopulaGenerator(family=family, alpha=alpha)
         poiss = MultivariatePoisson(family=family, alpha=alpha)
-        pm = poiss.pmf(data, mean)
-        pm[pm == 0] = 1e-3
-        return -sum(np.log10(pm))
+        pm = poiss.parallel_pmf(data, mean)
+        # print("sum pmf: " + sum(pm))
+        pm[pm <= 0] = 1e-13
+        return -np.sum(np.log(pm))
 
     def log_likelihood_gaussian(self, cov, data, mean, family):
         copula = CopulaGenerator(family="gaussian", cov=cov)
         poiss = MultivariatePoisson(family=family, cov=cov)
         pm = poiss.pmf(data, mean)
-        pm[pm == 0] = 1e-3
+        pm[pm <= 0] = 1e-3
         return -sum(np.log10(pm))
 
     def optimise_params(self, data, d_mean=None, start_alpha=None):
-        mean = np.array([np.mean(x) for x in data])
+        if d_mean is None:
+            d_mean = np.array([np.mean(x) for x in data])
         if self.family == "gaussian":
             cov_comb = np.corrcoef(data)
             return cov_comb, mean
         else:
             res = minimize(self.log_likelihood_archimedean, np.array([start_alpha]),
                            (data, d_mean, self.family), options={'disp': False})
-            return res.x, mean
+            return res.x, d_mean
+
+
+class Optimisation:
+    x = None
+    cop = None
+    mu = None
+    family = None
+
+    def __init__(self, x, cop):
+        self.x = x
+        self.cop = cop
+        self.family = cop.family
+        self.mu = np.array([np.mean(i) for i in x])
+
+    def log_likelihood(self, alpha):
+        poiss = MultivariatePoisson(family=self.family, alpha=alpha)
+        pm = poiss.parallel_pmf(self.x, self.mu)
+        pm[pm <= 0] = 1e-13
+        return np.sum(np.log(pm))
+
+    def optimise_alpha(self, alpha):
+        return minimize_scalar(self.log_likelihood)

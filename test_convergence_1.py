@@ -1,4 +1,5 @@
 import math
+import statistics
 import sys
 from functools import reduce
 
@@ -53,44 +54,56 @@ def kl_divergence(p, q):
     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
 
 
-def generate_experiment(data_size, data_dimensions, family, alpha=None, iter=50, cov=None):
+def generate_experiment(data_size, family, alpha=None, iter=50, cov=None):
     if family == "clayton" or "gumbel":
-        avg = 0
-        j = 0
+        values = []
         for i in range(iter):
             mp = mvp(family, alpha)
-            data, mean = mp.rvs(size=(data_dimensions, data_size))
+            data, mean = mp.rvs(size=(2, data_size))
             pmf = mp.pmf(data, mean)
             alpha_hat, mu = mp.optimise_params(data, mean, 11.0)
             mp_hat = mvp(family, alpha_hat[0])
             pmf_hat = mp_hat.pmf(data, mu)
             kl = kl_divergence(pmf, pmf_hat)
             if not math.isinf(kl):
-                print("kl " + str(j) + " " + str(kl))
-                avg += kl
-                j += 1
-        return avg / j
+                # print("kl " + str(j) + " " + str(kl))
+                values.append(kl)
+        median = statistics.median(values)
+        mean = statistics.mean(values)
+        stdev = statistics.stdev(values)
+        low = min(values)
+        high = max(values)
+        results = dict()
+        results["median"] = median
+        results["mean"] = mean
+        results["low"] = low
+        results["high"] = high
+        results["stdev"] = stdev
+        return results
 
 
 def main():
     mode = sys.argv[1]
-   # num_dimensions = int(sys.argv[2])
-   # num_samples = int(sys.argv[3])
-   # alpha = float(sys.argv[4])
+    # num_dimensions = int(sys.argv[2])
+    # num_samples = int(sys.argv[3])
+    # alpha = float(sys.argv[4])
     iter = int(sys.argv[2])
-    file = open("results-kl-div-2.txt", "a+", buffering=1)
+    file = open("results-kl-div-10.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
-        samps = [100]
-        dims = [3]
+        samps = [20, 80, 100, 200, 400, 800, 1000, 1400]
         alphas = [1.6, 4.6, 11.6]
-        for d in dims:
-            for s in samps:
-                for a in alphas:
-                    kld = generate_experiment(s, d, mode, alpha=a, iter=iter)
-                    file.write(str(d) + " " + str(s) + " " + str(a) + " " + str(kld) + "\n")
+        for s in samps:
+            for a in alphas:
+                kld = generate_experiment(s, mode, alpha=a, iter=iter)
+                file.write(
+                    "Dimensions: 2 Samples: " + str(s) + " Copula: " + mode + " Alpha: " + str(a) + " Mean KL: " + str(
+                        kld["mean"]) +
+                    " High KL: " + str(kld["high"]) + " Low KL: " + str(kld["low"]) + " Median KL: " + str(
+                        kld["median"])
+                    + " Stdev KL: " + str(kld["stdev"]) + "\n")
         file.close()
     elif mode == "gaussian":
-        kl = generate_experiment_gaussian(num_dimensions, num_samples)
+        kl = generate_experiment_gaussian(2, 100)
     else:
         raise Exception("No valid copula family selected.")
 
