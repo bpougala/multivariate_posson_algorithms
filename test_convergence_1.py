@@ -60,7 +60,7 @@ def generate_experiment(data_size, family, alpha=None, iter=50, cov=None):
         for i in range(iter):
             mp = mvp(family, alpha)
             data, mean = mp.rvs(size=(2, data_size))
-            pmf = mp.pmf(data, mean)
+            pmf = mp.parallel_pmf(data, mean)
             alpha_hat, mu = mp.optimise_params(data, mean, 11.0)
             mp_hat = mvp(family, alpha_hat[0])
             pmf_hat = mp_hat.parallel_pmf(data, mu)
