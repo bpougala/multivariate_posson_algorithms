@@ -87,14 +87,14 @@ def main():
     # num_dimensions = int(sys.argv[2])
     # num_samples = int(sys.argv[3])
     # alpha = float(sys.argv[4])
-    iter = int(sys.argv[2])
+    iterations = int(sys.argv[2])
     file = open("results-kl-div-10.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
         samps = [20, 80, 100, 200, 400, 800, 1000, 1400]
         alphas = [1.6, 4.6, 11.6]
         for s in samps:
             for a in alphas:
-                kld = generate_experiment(s, mode, alpha=a, iter=iter)
+                kld = generate_experiment(s, mode, alpha=a, iter=iterations)
                 file.write(
                     "Dimensions: 2 Samples: " + str(s) + " Copula: " + mode + " Alpha: " + str(a) + " Mean KL: " + str(
                         kld["mean"]) +
