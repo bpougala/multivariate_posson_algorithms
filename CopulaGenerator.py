@@ -40,17 +40,16 @@ class CopulaGenerator:
     def rvs(self, x):
         print(x)
 
+    def norm_ppf(self, x):
+        arr = []
+        for i in range(x.shape[0]):
+            arr.append(norm.ppf(i))
+
+        return np.array(arr)
+
     def sin_cdf(self, x, mu):  # for marginal distributions
         arr = []
         for i in range(x.shape[0]):
-            # a = mu**i
-            # b = math.factorial(i)
-            # a = math.log(mu) * i
-            # b = sum(math.log(ii) for ii in range(1, i+1))
-            # print("i: " + str(i) + " b: " + str(b))
-            # arr.append((mu**i)/math.factorial(i))
-            # c = math.exp(a)
-            # d = math.exp(b)
             arr.append(poisson.cdf(i, mu))
 
         # return np.cumsum(math.exp(-mu) * np.array(arr))
@@ -154,7 +153,21 @@ class CopulaGenerator:
             z = np.power(y, -1 / self.alpha)
             return z
         else:
-            return "hey"
+            x0 = norm.ppf(j0)
+            x1 = norm.ppf(j1)
+            arr = []
+            arr.append(x0)
+            arr.append(x1)
+            return self.multinorm(np.array(arr), self.cov)
+
+    def multinorm(self, x, cov, mu=None):
+        if mu is None:
+            mu = np.array([0, 0])
+
+        a = (-0.5 * (x.T - mu)) @ np.linalg.inv(cov)
+        b = np.exp(a @ (x.T - mu).T)
+        c = math.sqrt(2 * math.pi * np.linalg.det(cov))
+        return b / c
 
     def joint_cdf(self, data, mu=None):
         # The entire CDF is zero if at least one coordinate is 0

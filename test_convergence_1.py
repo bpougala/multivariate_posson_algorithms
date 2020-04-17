@@ -14,7 +14,7 @@ def Average(lst):
     return reduce(lambda a, b: a + b, lst) / len(lst)
 
 
-def generate_experiment_gaussian(num_dim, num_samples):
+def generate_experiment_gaussian(num_dim, num_samples, iter):
     cov = None
     mean = None
     cov_2 = np.array([[1, 0.2], [0.2, 1]])
@@ -34,14 +34,33 @@ def generate_experiment_gaussian(num_dim, num_samples):
         cov = cov_6
     else:
         raise Exception("Invalid number of dimensions chosen")
-    mean = np.random.randint(0, 20, size=num_dim)
-    multipoiss = mvp(cov=cov, family="gaussian")
-    data = multipoiss.rvs(mu=mean, size=(cov.shape[0], num_samples))
-    pmf = multipoiss.pmf(data, mean)
-    cov_hat, mean_hat = multipoiss.optimise_params(data=data)
-    multipoiss_hat = mvp(cov=cov_hat, family="gaussian")
-    pmf_hat = multipoiss_hat.pmf(data, mean_hat)
-    return kl_divergence(pmf, pmf_hat)
+    values = []
+    i = 0
+    while i < iter:
+        mean = np.random.randint(0, 20, size=num_dim)
+        multipoiss = mvp(cov=cov, family="gaussian")
+        data, mean = multipoiss.rvs(mu=mean, size=(cov.shape[0], num_samples))
+        pmf = multipoiss.parallel_pmf(data, mean)
+        cov_hat, mean_hat = multipoiss.optimise_params(data=data)
+        multipoiss_hat = mvp(cov=cov_hat, family="gaussian")
+        pmf_hat = multipoiss_hat.parallel_pmf(data, mean_hat)
+        kl = kl_divergence(pmf, pmf_hat)
+        if isinstance(kl, (int, float, complex)):
+            values.append(kl)
+            i += 1
+
+    median = statistics.median(values)
+    mean = statistics.mean(values)
+    stdev = statistics.stdev(values)
+    low = min(values)
+    high = max(values)
+    results = dict()
+    results["median"] = median
+    results["mean"] = mean
+    results["low"] = low
+    results["high"] = high
+    results["stdev"] = stdev
+    return results
 
 
 def kullback_leibler(pmf_x, pmf_y):
@@ -92,7 +111,7 @@ def main():
     # num_samples = int(sys.argv[3])
     # alpha = float(sys.argv[4])
     iterations = int(sys.argv[2])
-    file = open("results-kl-div-15.txt", "a+", buffering=1)
+    file = open("results-kl-div-16.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
         samps = [100, 200, 400, 800, 1000, 1400]
         alphas = [5.6]
@@ -105,7 +124,14 @@ def main():
                     + str(kld["low"]) + " Median KL: " + str(kld["median"]) + " Stdev KL: " + str(kld["stdev"]) + "\n")
         file.close()
     elif mode == "gaussian":
-        kl = generate_experiment_gaussian(2, 100)
+        samps = [100, 200, 400, 800, 1000, 1400]
+        for s in samps:
+            kld = generate_experiment_gaussian(2, s, iterations)
+            file.write(
+                "Dimensions: 2 Samples: " + str(s) + " Copula: " + mode + " Mean KL: " + str(kld["mean"]) + " High KL: "
+                + str(kld["high"]) + " Low KL: " + str(kld["low"]) + " Median KL: " + str(kld["median"]) + " Stdev KL: "
+                + str(kld["stdev"]) + "\n")
+        file.close()
     else:
         raise Exception("No valid copula family selected.")
 
