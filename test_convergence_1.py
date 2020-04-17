@@ -1,4 +1,3 @@
-import math
 import statistics
 import sys
 from functools import reduce
@@ -6,7 +5,6 @@ from functools import reduce
 import numpy as np
 from scipy.stats import random_correlation
 
-import MultivariatePoisson as mvp
 from MultivariatePoisson import MultivariatePoisson as mvp
 
 results_x = list()
@@ -51,21 +49,26 @@ def kullback_leibler(pmf_x, pmf_y):
 
 
 def kl_divergence(p, q):
+    p[p <= 0] = 1e-8
+    q[q <= 0] = 1e-8
     return np.sum(np.where(p != 0, p * np.log(p / q), 0))
 
 
 def generate_experiment(data_size, family, alpha=None, iter=50, cov=None):
     if family == "clayton" or "gumbel":
         values = []
+        alphas = []
         for i in range(iter):
             mp = mvp(family, alpha)
             data, mean = mp.rvs(size=(2, data_size))
             pmf = mp.parallel_pmf(data, mean)
             alpha_hat, mu = mp.optimise_params(data, mean, 11.0)
             mp_hat = mvp(family, alpha_hat[0])
+            m = abs(alpha_hat[0] - alpha)
+            alphas.append(m)
             pmf_hat = mp_hat.parallel_pmf(data, mu)
             kl = kl_divergence(pmf, pmf_hat)
-            if not math.isinf(kl):
+            if isinstance(kl, (int, float, complex)):
                 # print("kl " + str(j) + " " + str(kl))
                 values.append(kl)
         median = statistics.median(values)
@@ -74,6 +77,7 @@ def generate_experiment(data_size, family, alpha=None, iter=50, cov=None):
         low = min(values)
         high = max(values)
         results = dict()
+        results["alphas"] = statistics.mean(alphas)
         results["median"] = median
         results["mean"] = mean
         results["low"] = low
@@ -88,7 +92,7 @@ def main():
     # num_samples = int(sys.argv[3])
     # alpha = float(sys.argv[4])
     iterations = int(sys.argv[2])
-    file = open("results-kl-div-11.txt", "a+", buffering=1)
+    file = open("results-kl-div-13.txt", "a+", buffering=1)
     if mode == "clayton" or mode == "gumbel":
         samps = [20, 80, 100, 200, 400, 800, 1000, 1400]
         alphas = [1.6, 4.6, 11.6]
