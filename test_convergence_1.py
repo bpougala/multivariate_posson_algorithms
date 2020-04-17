@@ -100,11 +100,9 @@ def main():
             for a in alphas:
                 kld = generate_experiment(s, mode, alpha=a, iter=iterations)
                 file.write(
-                    "Dimensions: 2 Samples: " + str(s) + " Copula: " + mode + " Alpha: " + str(a) + " Mean KL: " + str(
-                        kld["mean"]) +
-                    " High KL: " + str(kld["high"]) + " Low KL: " + str(kld["low"]) + " Median KL: " + str(
-                        kld["median"])
-                    + " Stdev KL: " + str(kld["stdev"]) + "\n")
+                    "Dimensions: 2 Samples: " + str(s) + " Copula: " + mode + " Alpha: " + str(a) + "Mean alpha hat" +
+                    str(kld["alphas"]) + " Mean KL: " + str(kld["mean"]) + " High KL: " + str(kld["high"]) + " Low KL: "
+                    + str(kld["low"]) + " Median KL: " + str(kld["median"]) + " Stdev KL: " + str(kld["stdev"]) + "\n")
         file.close()
     elif mode == "gaussian":
         kl = generate_experiment_gaussian(2, 100)
