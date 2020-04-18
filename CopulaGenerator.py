@@ -130,6 +130,33 @@ class CopulaGenerator:
             arr.append(poiss)
         return np.asarray(arr)
 
+    def multi_cdf(self, data, mu):
+        arr = []
+        for i, dim in enumerate(data):
+            j = self.sin_cdf(dim, mu[i])
+            arr.append(j)
+
+        if self.family.lower() == "gumbel":
+            x = np.array([(-np.log(k)) ** self.alpha for k in np.array(arr)])
+            y = arr[0]
+            for i in range(1, len(arr)):
+                y = np.add.outer(y, arr[i])
+            z = y ** 1 / self.alpha
+            print("shape of z: " + str(z.shape))
+            return np.exp(-z)
+        elif self.family.lower() == "clayton":
+            x = np.array([j ** (-self.alpha) for j in np.array(arr)])
+            y = arr[0]
+            for i in range(1, len(arr)):
+                y = np.add.outer(y, arr[i])
+            z = -1 + z
+            z[z < 0] = 0
+            z = np.power(y, -1 / self.alpha)
+            print("shape of z: " + str(z.shape))
+            return z
+        else:
+            return 0
+
     def biv_cdf(self, data, mu):
         j0 = self.sin_cdf(data[0], mu[0])
         j1 = self.sin_cdf(data[1], mu[1])
