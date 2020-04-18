@@ -3,7 +3,7 @@ from scipy.optimize import minimize
 
 from MultivariatePoisson import MultivariatePoisson as multi_poisson
 
-for i in range(100):
+for i in range(50):
     mvp = multi_poisson("clayton", 7.1)
     data, mean = mvp.rvs(size=(2, 100))
     pmf = mvp.parallel_pmf(data, mean)
