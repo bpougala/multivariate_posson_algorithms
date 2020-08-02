@@ -20,7 +20,7 @@ Where `family` is one of `clayton`, `gaussian` or `gumbel`. `alpha` is a real nu
 To generate artificial data with a known set of dimensions and data samples, then run: 
 
 ```python
-data = dist.cvs(size=(d,s))
+data = dist.rvs(size=(d,s))
 ```
 Where `size` is of shape `d` (number of dimensions) and `s` (number of samples along each dimension). 
 
