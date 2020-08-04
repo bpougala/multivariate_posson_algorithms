@@ -1,7 +1,7 @@
 # Algorithms for Handling Multivariate Poisson Distributions
 
-The University of Edinburgh, School of Informatics, 2020. 
-Biko Pougala. All rights reserved. 
+The University of Edinburgh, School of Informatics, 2020. <br/>
+Author: Biko Pougala.  
 
 ## Project focus
 
